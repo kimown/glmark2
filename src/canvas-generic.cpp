@@ -37,10 +37,10 @@
 bool
 CanvasGeneric::init()
 {
-    if (!native_state_.init_display())
-        return false;
+//    if (!native_state_.init_display())
+//        return false;
 
-    if (!gl_state_.init_display(native_state_.display(), visual_config_))
+    if (!gl_state_.init_display(NULL, visual_config_))
         return false;
 
     return reset();
@@ -59,7 +59,9 @@ CanvasGeneric::reset()
 
     if (!do_make_current())
         return false;
-
+    Log::error("Glmark2 needs OpenGL(ES) version >= 2.0 to run"
+               " (but version string is: '%s')!\n",
+               glGetString(GL_VERSION));
     if (!supports_gl2()) {
         Log::error("Glmark2 needs OpenGL(ES) version >= 2.0 to run"
                    " (but version string is: '%s')!\n",
@@ -146,8 +148,7 @@ CanvasGeneric::print_info()
     ss << "    Surface Config: " << "buf=" << config.buffer
        << " r=" << config.red << " g=" << config.green << " b=" << config.blue
        << " a=" << config.alpha << " depth=" << config.depth
-       << " stencil=" << config.stencil << " samples=" << config.samples
-       << std::endl;
+       << " stencil=" << config.stencil << std::endl;
     ss << "    Surface Size:   " << win_props.width << "x" << win_props.height
        << (win_props.fullscreen ? " fullscreen" : " windowed") << std::endl;
 
@@ -256,11 +257,11 @@ CanvasGeneric::resize_no_viewport(int width, int height)
         return true;
     }
 
-    if (!native_state_.create_window(properties))
-    {
-        Log::error("Error: Couldn't create native window!\n");
-        return false;
-    }
+//    if (!native_state_.create_window(properties))
+//    {
+//        Log::error("Error: Couldn't create native window!\n");
+//        return false;
+//    }
 
     native_window_ = native_state_.window(cur_properties);
     window_initialized_ = true;
