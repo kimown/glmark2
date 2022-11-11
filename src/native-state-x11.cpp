@@ -60,115 +60,115 @@ NativeStateX11::display()
 bool
 NativeStateX11::create_window(WindowProperties const& properties)
 {
-    static const char *win_name("glmark2 " GLMARK_VERSION);
-
-    if (!xdpy_) {
-        Log::error("Error: X11 Display has not been initialized!\n");
-        return false;
-    }
-
-    /* Recreate an existing window only if it has actually been resized */
-    if (xwin_) {
-        if (properties_.fullscreen != properties.fullscreen ||
-            (properties.fullscreen == false &&
-             (properties_.width != properties.width ||
-              properties_.height != properties.height)))
-        {
-            XDestroyWindow(xdpy_, xwin_);
-            xwin_ = 0;
-        }
-        else
-        {
-            return true;
-        }
-    }
-
-    /* Set desired attributes */
-    properties_.fullscreen = properties.fullscreen;
-    properties_.visual_id = properties.visual_id;
-
-    if (properties_.fullscreen) {
-        /* Get the screen (root window) size */
-        XWindowAttributes window_attr;
-        XGetWindowAttributes(xdpy_, RootWindow(xdpy_, DefaultScreen(xdpy_)), 
-                             &window_attr);
-        properties_.width = window_attr.width;
-        properties_.height = window_attr.height;
-    }
-    else {
-        properties_.width = properties.width;
-        properties_.height = properties.height;
-    }
-
-    XVisualInfo vis_tmpl;
-    XVisualInfo *vis_info = 0;
-    int num_visuals;
-
-    /* The X window visual must match the supplied visual id */
-    vis_tmpl.visualid = properties_.visual_id;
-    vis_info = XGetVisualInfo(xdpy_, VisualIDMask, &vis_tmpl,
-                             &num_visuals);
-    if (!vis_info) {
-        Log::error("Error: Could not get a valid XVisualInfo!\n");
-        return false;
-    }
-
-    Log::debug("Creating XWindow W: %d H: %d VisualID: 0x%x\n",
-               properties_.width, properties_.height, vis_info->visualid);
-
-    /* window attributes */
-    XSetWindowAttributes attr;
-    unsigned long mask;
-    Window root = RootWindow(xdpy_, DefaultScreen(xdpy_));
-
-    attr.background_pixel = 0;
-    attr.border_pixel = 0;
-    attr.colormap = XCreateColormap(xdpy_, root, vis_info->visual, AllocNone);
-    attr.event_mask = KeyPressMask;
-    mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
-
-    xwin_ = XCreateWindow(xdpy_, root, 0, 0, properties_.width, properties_.height,
-                          0, vis_info->depth, InputOutput,
-                          vis_info->visual, mask, &attr);
-
-    XFree(vis_info);
-
-    if (!xwin_) {
-        Log::error("Error: XCreateWindow() failed!\n");
-        return false;
-    }
-
-    /* set hints and properties */
-    Atom fs_atom = None;
-    if (properties_.fullscreen) {
-        fs_atom = XInternAtom(xdpy_, "_NET_WM_STATE_FULLSCREEN", True);
-        if (fs_atom == None)
-            Log::debug("Warning: Could not set EWMH Fullscreen hint.\n");
-    }
-    if (fs_atom != None) {
-        XChangeProperty(xdpy_, xwin_,
-                        XInternAtom(xdpy_, "_NET_WM_STATE", True),
-                        XA_ATOM, 32, PropModeReplace,
-                        reinterpret_cast<unsigned char*>(&fs_atom),  1);
-    }
-    else {
-        XSizeHints sizehints;
-        sizehints.min_width  = properties_.width;
-        sizehints.min_height = properties_.height;
-        sizehints.max_width  = properties_.width;
-        sizehints.max_height = properties_.height;
-        sizehints.flags = PMaxSize | PMinSize;
-
-        XSetWMProperties(xdpy_, xwin_, NULL, NULL,
-                         NULL, 0, &sizehints, NULL, NULL);
-    }
-
-    /* Set the window name */
-    XStoreName(xdpy_ , xwin_,  win_name);
-
-    /* Gracefully handle Window Delete event from window manager */
-    Atom wmDelete = XInternAtom(xdpy_, "WM_DELETE_WINDOW", True);
-    XSetWMProtocols(xdpy_, xwin_, &wmDelete, 1);
+//    static const char *win_name("glmark2 " GLMARK_VERSION);
+//
+//    if (!xdpy_) {
+//        Log::error("Error: X11 Display has not been initialized!\n");
+//        return false;
+//    }
+//
+//    /* Recreate an existing window only if it has actually been resized */
+//    if (xwin_) {
+//        if (properties_.fullscreen != properties.fullscreen ||
+//            (properties.fullscreen == false &&
+//             (properties_.width != properties.width ||
+//              properties_.height != properties.height)))
+//        {
+//            XDestroyWindow(xdpy_, xwin_);
+//            xwin_ = 0;
+//        }
+//        else
+//        {
+//            return true;
+//        }
+//    }
+//
+//    /* Set desired attributes */
+//    properties_.fullscreen = properties.fullscreen;
+//    properties_.visual_id = properties.visual_id;
+//
+//    if (properties_.fullscreen) {
+//        /* Get the screen (root window) size */
+//        XWindowAttributes window_attr;
+//        XGetWindowAttributes(xdpy_, RootWindow(xdpy_, DefaultScreen(xdpy_)),
+//                             &window_attr);
+//        properties_.width = window_attr.width;
+//        properties_.height = window_attr.height;
+//    }
+//    else {
+//        properties_.width = properties.width;
+//        properties_.height = properties.height;
+//    }
+//
+//    XVisualInfo vis_tmpl;
+//    XVisualInfo *vis_info = 0;
+//    int num_visuals;
+//
+//    /* The X window visual must match the supplied visual id */
+//    vis_tmpl.visualid = properties_.visual_id;
+//    vis_info = XGetVisualInfo(xdpy_, VisualIDMask, &vis_tmpl,
+//                             &num_visuals);
+//    if (!vis_info) {
+//        Log::error("Error: Could not get a valid XVisualInfo!\n");
+//        return false;
+//    }
+//
+//    Log::debug("Creating XWindow W: %d H: %d VisualID: 0x%x\n",
+//               properties_.width, properties_.height, vis_info->visualid);
+//
+//    /* window attributes */
+//    XSetWindowAttributes attr;
+//    unsigned long mask;
+//    Window root = RootWindow(xdpy_, DefaultScreen(xdpy_));
+//
+//    attr.background_pixel = 0;
+//    attr.border_pixel = 0;
+//    attr.colormap = XCreateColormap(xdpy_, root, vis_info->visual, AllocNone);
+//    attr.event_mask = KeyPressMask;
+//    mask = CWBackPixel | CWBorderPixel | CWColormap | CWEventMask;
+//
+//    xwin_ = XCreateWindow(xdpy_, root, 0, 0, properties_.width, properties_.height,
+//                          0, vis_info->depth, InputOutput,
+//                          vis_info->visual, mask, &attr);
+//
+//    XFree(vis_info);
+//
+//    if (!xwin_) {
+//        Log::error("Error: XCreateWindow() failed!\n");
+//        return false;
+//    }
+//
+//    /* set hints and properties */
+//    Atom fs_atom = None;
+//    if (properties_.fullscreen) {
+//        fs_atom = XInternAtom(xdpy_, "_NET_WM_STATE_FULLSCREEN", True);
+//        if (fs_atom == None)
+//            Log::debug("Warning: Could not set EWMH Fullscreen hint.\n");
+//    }
+//    if (fs_atom != None) {
+//        XChangeProperty(xdpy_, xwin_,
+//                        XInternAtom(xdpy_, "_NET_WM_STATE", True),
+//                        XA_ATOM, 32, PropModeReplace,
+//                        reinterpret_cast<unsigned char*>(&fs_atom),  1);
+//    }
+//    else {
+//        XSizeHints sizehints;
+//        sizehints.min_width  = properties_.width;
+//        sizehints.min_height = properties_.height;
+//        sizehints.max_width  = properties_.width;
+//        sizehints.max_height = properties_.height;
+//        sizehints.flags = PMaxSize | PMinSize;
+//
+//        XSetWMProperties(xdpy_, xwin_, NULL, NULL,
+//                         NULL, 0, &sizehints, NULL, NULL);
+//    }
+//
+//    /* Set the window name */
+//    XStoreName(xdpy_ , xwin_,  win_name);
+//
+//    /* Gracefully handle Window Delete event from window manager */
+//    Atom wmDelete = XInternAtom(xdpy_, "WM_DELETE_WINDOW", True);
+//    XSetWMProtocols(xdpy_, xwin_, &wmDelete, 1);
 
     return true;
 }
