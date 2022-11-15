@@ -9,15 +9,15 @@ git checkout mybranch2
 ./waf build -j 10
 ./waf install --destdir=$PWD/release
 cd release/usr/local/bin
-stdout_size=1920x1080 ./glmark2-es2 --data-path=$(pwd)/../share/glmark2 --off-screen
-stdout_size=3840x2160 ./glmark2-es2 --data-path=$(pwd)/../share/glmark2 --off-screen
+stdout_headless=1 stdout_size=1920x1080 ./glmark2-es2 --data-path=$(pwd)/../share/glmark2 --off-screen
+stdout_headless=1 stdout_size=3840x2160 ./glmark2-es2 --data-path=$(pwd)/../share/glmark2 --off-screen
 ```
 
 stdout_headless
 
 default-benchmarks.h
 
-stdout_size=1920x1080 ./glmark2-es2 --debug --validate --off-screen
+stdout_headless=1 stdout_size=3840x2160 ./glmark2-es2 --data-path=$(pwd)/../share/glmark2 --debug --validate --off-screen
 
 
 /media/google/Data/com/github/glmark2/release/usr/local/bin/glmark2-es2
