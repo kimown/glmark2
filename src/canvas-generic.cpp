@@ -29,7 +29,7 @@
 
 #include <fstream>
 #include <sstream>
-
+#include <string.h>
 /******************
  * Public methods *
  ******************/
@@ -37,8 +37,14 @@
 bool
 CanvasGeneric::init()
 {
-    if (!native_state_.init_display())
+
+    if(strcmp(getenv("stdout_headless"),"1")==0){
+
+    } else {
+     if (!native_state_.init_display())
         return false;
+    }
+
 
     if (!gl_state_.init_display(native_state_.display(), visual_config_))
         return false;
@@ -256,11 +262,16 @@ CanvasGeneric::resize_no_viewport(int width, int height)
         return true;
     }
 
-    if (!native_state_.create_window(properties))
-    {
-        Log::error("Error: Couldn't create native window!\n");
-        return false;
+    if(strcmp(getenv("stdout_headless"),"1")==0){
+
+    }else {
+        if (!native_state_.create_window(properties))
+        {
+            Log::error("Error: Couldn't create native window!\n");
+            return false;
+        }
     }
+
 
     native_window_ = native_state_.window(cur_properties);
     window_initialized_ = true;

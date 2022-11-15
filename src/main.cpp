@@ -33,7 +33,7 @@
 #include "scene-collection.h"
 
 #include "canvas-generic.h"
-
+#include <string.h>
 #if GLMARK2_USE_X11
 #include "native-state-x11.h"
 #elif GLMARK2_USE_DRM
@@ -222,7 +222,12 @@ main(int argc, char *argv[])
     canvas.print_info();
     Log::info("=======================================================\n");
 
-    canvas.visible(true);
+    if(strcmp(getenv("stdout_headless"),"1")==0){
+            canvas.visible(false);
+    } else {
+        canvas.visible(true);
+    }
+
 
     if (Options::validate)
         do_validation(canvas);

@@ -28,7 +28,6 @@
 #include <iomanip>
 #include <sstream>
 #include <cstring>
-#include <string.h>
 
 using std::vector;
 using std::string;
@@ -318,7 +317,7 @@ GLStateEGL::init_display(void* native_display, GLVisualConfig& visual_config)
         return false;
     }
 
-    native_display_ = reinterpret_cast<EGLNativeDisplayType>(native_display);
+//    native_display_ = reinterpret_cast<EGLNativeDisplayType>(native_display);
     requested_visual_config_ = visual_config;
 
     return gotValidDisplay();
@@ -336,10 +335,10 @@ bool
 GLStateEGL::init_gl_extensions()
 {
 #if GLMARK2_USE_GLESv2
-    if (!gladLoadGLES2UserPtr(load_proc, this)) {
-        Log::error("Loading GLESv2 entry points failed.\n");
-        return false;
-    }
+//    if (!gladLoadGLES2UserPtr(load_proc, this)) {
+//        Log::error("Loading GLESv2 entry points failed.");
+//        return false;
+//    }
 
     GLExtensions::MapBuffer = glMapBufferOES;
     GLExtensions::UnmapBuffer = glUnmapBufferOES;
@@ -359,7 +358,7 @@ GLStateEGL::init_gl_extensions()
     GLExtensions::GenerateMipmap = glGenerateMipmap;
 #elif GLMARK2_USE_GL
     if (!gladLoadGLUserPtr(load_proc, this)) {
-        Log::error("Loading GL entry points failed.\n");
+        Log::error("Loading GL entry points failed.");
         return false;
     }
     GLExtensions::MapBuffer = glMapBuffer;
@@ -405,10 +404,10 @@ GLStateEGL::valid()
         return false;
     }
 
-    if (Options::swap_mode != Options::SwapModeFIFO &&
-        (!eglSwapInterval || !eglSwapInterval(egl_display_, 0))) {
-        Log::info("** Failed to set swap interval. Results may be bounded above by refresh rate.\n");
-    }
+//    if (Options::swap_mode != Options::SwapModeFIFO &&
+//        (!eglSwapInterval || !eglSwapInterval(egl_display_, 0))) {
+//        Log::info("** Failed to set swap interval. Results may be bounded above by refresh rate.\n");
+//    }
 
     if (!init_gl_extensions()) {
         return false;
@@ -488,51 +487,83 @@ GLStateEGL::getVisualConfig(GLVisualConfig& vc)
 #endif
 
 bool
-GLStateEGL::gotValidDisplayHeadless()
+GLStateEGL::gotValidDisplay()
 {
-
     if (egl_display_)
         return true;
 
-    /* Until we initialize glad EGL, load and use our own function pointers. */
-    PFNEGLQUERYSTRINGPROC egl_query_string =
-            reinterpret_cast<PFNEGLQUERYSTRINGPROC>(egl_lib_.load("eglQueryString"));
-    PFNEGLGETPROCADDRESSPROC egl_get_proc_address =
-            reinterpret_cast<PFNEGLGETPROCADDRESSPROC>(egl_lib_.load("eglGetProcAddress"));
-    PFNEGLGETERRORPROC egl_get_error =
-            reinterpret_cast<PFNEGLGETERRORPROC>(egl_lib_.load("eglGetError"));
-    PFNEGLGETDISPLAYPROC egl_get_display =
-            reinterpret_cast<PFNEGLGETDISPLAYPROC>(egl_lib_.load("eglGetDisplay"));
-    PFNEGLINITIALIZEPROC egl_initialize =
-            reinterpret_cast<PFNEGLINITIALIZEPROC>(egl_lib_.load("eglInitialize"));
-    PFNEGLQUERYDEVICESEXTPROC egl_QueryDevicesEXT =
-            reinterpret_cast<PFNEGLQUERYDEVICESEXTPROC>(egl_lib_.load("eglQueryDevicesExt"));
-    printf("sdfadsf9991111111111\n");
-
     int egl_version = gladLoaderLoadEGL(NULL);
-    if (!egl_version) {
-        printf("Unable to load EGL.\n");
-        return 1;
-    }
+    if(!egl_version) {
+        fprintf(stderr, "failed to EGL with glad.\n");
+        exit(EXIT_FAILURE);
 
+    };
+    int m_renderDevice;
+    // Query EGL Devices
     const int max_devices = 32;
     EGLDeviceEXT egl_devices[max_devices];
-    EGLint error = eglGetError();
     EGLint num_devices = 0;
-    eglQueryDevicesEXT(max_devices, egl_devices, &num_devices);
-    EGLDisplay eglDisplay = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT,
-                                                     egl_devices[0], NULL);
+    EGLint egl_error = eglGetError();
+    if (!eglQueryDevicesEXT(max_devices, egl_devices, &num_devices) ||
+        egl_error != EGL_SUCCESS) {
+        printf("eglQueryDevicesEXT Failed.\n");
+    }else{
+        printf("eglQueryDevicesEXT ok.\n");
+    }
+    printf("max_devices %d， %d\n",max_devices, num_devices);
 
-    EGLint major;
-    EGLint minor;
+    const char *s;
+    for (EGLint i = 0; i < num_devices; ++i) {
+        // Set display
+        EGLDisplay display = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT,
+                                                      egl_devices[i], NULL);
+        if (eglGetError() == EGL_SUCCESS && display != EGL_NO_DISPLAY) {
+            int major, minor;
+            EGLBoolean initialized = eglInitialize(display, &major, &minor);
+            if (eglGetError() == EGL_SUCCESS && initialized == EGL_TRUE) {
+                s = eglQueryString(display, EGL_VENDOR);
+                printf("EGL_VENDOR = %s\n", s);
+            }
+        }
+    }
 
-    EGLBoolean eglInitialized = eglInitialize(eglDisplay, &major, &minor);
+    EGLDisplay display = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT,
+                                                  egl_devices[0], NULL);
 
-    printf("%d %d %d\n", major, minor, eglInitialized);
-    printf("EGL vendor string: %s\n", eglQueryString(eglDisplay, EGL_VENDOR));
-    printf("EGL vendor string: %s\n", eglQueryString(eglDisplay, EGL_CLIENT_APIS));
-    printf("EGL vendor string: %s\n", eglQueryString(eglDisplay, EGL_EXTENSIONS  ));
-    egl_display_ = eglDisplay;
+    if (eglGetError() == EGL_SUCCESS && display != EGL_NO_DISPLAY) {
+        printf("999\n");
+        int major, minor;
+        EGLBoolean initialized = eglInitialize(display, &major, &minor);
+        if (eglGetError() == EGL_SUCCESS && initialized == EGL_TRUE) {
+            egl_display_ = display;
+        }
+        printf("eglInitialize %d, %d.\n",major,minor  );
+    }
+
+    printf("111111111111111111---");
+    /* Until we initialize glad EGL, load and use our own function pointers. */
+    PFNEGLQUERYSTRINGPROC egl_query_string =
+        reinterpret_cast<PFNEGLQUERYSTRINGPROC>(egl_lib_.load("eglQueryString"));
+    PFNEGLGETPROCADDRESSPROC egl_get_proc_address =
+        reinterpret_cast<PFNEGLGETPROCADDRESSPROC>(egl_lib_.load("eglGetProcAddress"));
+    PFNEGLGETERRORPROC egl_get_error =
+        reinterpret_cast<PFNEGLGETERRORPROC>(egl_lib_.load("eglGetError"));
+    PFNEGLGETDISPLAYPROC egl_get_display =
+        reinterpret_cast<PFNEGLGETDISPLAYPROC>(egl_lib_.load("eglGetDisplay"));
+    PFNEGLINITIALIZEPROC egl_initialize =
+        reinterpret_cast<PFNEGLINITIALIZEPROC>(egl_lib_.load("eglInitialize"));
+
+
+
+    s = egl_query_string(egl_display_, EGL_VENDOR);
+    printf("EGL_VENDOR = %s\n", s);
+
+    s = eglQueryString(egl_display_, EGL_VENDOR);
+    printf("EGL_VENDOR = %s\n", s);
+
+    s = eglQueryString(egl_display_, EGL_EXTENSIONS);
+    printf("EGL_EXTENSIONS = %s\n", s);
+
 
     if (!egl_query_string || !egl_get_proc_address || !egl_get_error ||
         !egl_get_display || !egl_initialize)
@@ -541,22 +572,22 @@ GLStateEGL::gotValidDisplayHeadless()
     }
 
     char const * __restrict const supported_extensions =
-            egl_query_string(EGL_NO_DISPLAY, EGL_EXTENSIONS);
+        egl_query_string(EGL_NO_DISPLAY, EGL_EXTENSIONS);
 
     if (GLMARK2_NATIVE_EGL_DISPLAY_ENUM != 0 && supported_extensions
         && strstr(supported_extensions, "EGL_EXT_platform_base"))
     {
         Log::debug("Using eglGetPlatformDisplayEXT()\n");
         PFNEGLGETPLATFORMDISPLAYEXTPROC egl_get_platform_display =
-                reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(
-                        egl_get_proc_address("eglGetPlatformDisplayEXT"));
+            reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(
+                egl_get_proc_address("eglGetPlatformDisplayEXT"));
 
-//        if (egl_get_platform_display != nullptr) {
+        if (egl_get_platform_display != nullptr) {
 //            egl_display_ = egl_get_platform_display(
 //                GLMARK2_NATIVE_EGL_DISPLAY_ENUM,
 //                reinterpret_cast<void*>(native_display_),
 //                nullptr);
-//        }
+        }
 
         if (!egl_display_) {
             Log::debug("eglGetPlatformDisplayEXT() failed with error: 0x%x\n",
@@ -567,34 +598,37 @@ GLStateEGL::gotValidDisplayHeadless()
     {
         Log::debug("eglGetPlatformDisplayEXT() seems unsupported\n");
     }
-
+    printf("22222222222233333333333333\n");
     /* Just in case get_platform_display failed... */
     if (!egl_display_) {
         Log::debug("Falling back to eglGetDisplay()\n");
         egl_display_ = egl_get_display(EGL_DEFAULT_DISPLAY);
+        Log::error("eglGetDisplay() message: 0x%x\n", egl_get_error());
     }
-
+    printf("xxxxxxxxxxxxxxxxxxxxxxxx\n");
     if (!egl_display_) {
         Log::error("eglGetDisplay() failed with error: 0x%x\n", egl_get_error());
         return false;
     }
 
-    int egl_major(-1);
-    int egl_minor(-1);
-    if (!egl_initialize(egl_display_, &egl_major, &egl_minor)) {
-        Log::error("eglInitialize() failed with error: 0x%x\n", egl_get_error());
-        egl_display_ = 0;
-        return false;
-    }
+//    int egl_major(-1);
+//    int egl_minor(-1);
+//    if (!egl_initialize(egl_display_, &egl_major, &egl_minor)) {
+//        Log::error("eglInitialize() failed with error: 0x%x\n", egl_get_error());
+//        egl_display_ = 0;
+//        return false;
+//    }else{
+//        printf("%d %d %d\n", egl_major, egl_minor, 1);
+//    }
 
     /* Reinitialize GLAD with a known display */
-    if (gladLoadEGLUserPtr(egl_display_, load_egl_func, &egl_lib_) == 0) {
-        Log::error("Loading EGL entry points failed\n");
-        return false;
-    }
+//    if (gladLoadEGLUserPtr(egl_display_, load_egl_func, &egl_lib_) == 0) {
+//        Log::error("Loading EGL entry points failed\n");
+//        return false;
+//    }
 
     /* From this point on we can use the normal EGL function calls. */
-
+    printf("xxxxxxxxxxxxxxxrrrrrrrrrrrrr\n");
 #if GLMARK2_USE_GLESv2
     EGLenum apiType(EGL_OPENGL_ES_API);
 #if defined(WIN32)
@@ -611,6 +645,17 @@ GLStateEGL::gotValidDisplayHeadless()
         return false;
     }
 #endif
+    printf("xxxxxxxxxxxxxxxddddddddddddddd\n");
+    printf("xxxxxxxxxxxxxx---\n");
+    printf("xxxxxxxxxxxxxx---\n");
+    printf("xxxxxxxxxxxxxx---\n");
+    if(eglBindAPI){
+        printf("ok");
+    }else{
+        printf("ok no");
+    }
+    eglBindAPI(apiType);
+    printf("xxxxxxxxxxxxxx---\n");
 
     if (eglBindAPI && !eglBindAPI(apiType)) {
         Log::error("Failed to bind api\n");
@@ -622,128 +667,13 @@ GLStateEGL::gotValidDisplayHeadless()
         return false;
     }
 
+    printf("ddddd---");
+    printf("GL_RENDERER   = %s\n", (char *) glGetString(GL_RENDERER));
+    printf("GL_VERSION    = %s\n", (char *) glGetString(GL_VERSION));
+    printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
+    printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
+    printf("111111111ddddd---");
     return true;
-
-}
-
-bool
-GLStateEGL::gotValidDisplayNotHeadless()
-{
-    if (egl_display_)
-        return true;
-
-    /* Until we initialize glad EGL, load and use our own function pointers. */
-    PFNEGLQUERYSTRINGPROC egl_query_string =
-            reinterpret_cast<PFNEGLQUERYSTRINGPROC>(egl_lib_.load("eglQueryString"));
-    PFNEGLGETPROCADDRESSPROC egl_get_proc_address =
-            reinterpret_cast<PFNEGLGETPROCADDRESSPROC>(egl_lib_.load("eglGetProcAddress"));
-    PFNEGLGETERRORPROC egl_get_error =
-            reinterpret_cast<PFNEGLGETERRORPROC>(egl_lib_.load("eglGetError"));
-    PFNEGLGETDISPLAYPROC egl_get_display =
-            reinterpret_cast<PFNEGLGETDISPLAYPROC>(egl_lib_.load("eglGetDisplay"));
-    PFNEGLINITIALIZEPROC egl_initialize =
-            reinterpret_cast<PFNEGLINITIALIZEPROC>(egl_lib_.load("eglInitialize"));
-
-    if (!egl_query_string || !egl_get_proc_address || !egl_get_error ||
-        !egl_get_display || !egl_initialize)
-    {
-        return false;
-    }
-
-    char const * __restrict const supported_extensions =
-            egl_query_string(EGL_NO_DISPLAY, EGL_EXTENSIONS);
-
-    if (GLMARK2_NATIVE_EGL_DISPLAY_ENUM != 0 && supported_extensions
-        && strstr(supported_extensions, "EGL_EXT_platform_base"))
-    {
-        Log::debug("Using eglGetPlatformDisplayEXT()\n");
-        PFNEGLGETPLATFORMDISPLAYEXTPROC egl_get_platform_display =
-                reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(
-                        egl_get_proc_address("eglGetPlatformDisplayEXT"));
-
-        if (egl_get_platform_display != nullptr) {
-            egl_display_ = egl_get_platform_display(
-                    GLMARK2_NATIVE_EGL_DISPLAY_ENUM,
-                    reinterpret_cast<void*>(native_display_),
-                    nullptr);
-        }
-
-        if (!egl_display_) {
-            Log::debug("eglGetPlatformDisplayEXT() failed with error: 0x%x\n",
-                       egl_get_error());
-        }
-    }
-    else
-    {
-        Log::debug("eglGetPlatformDisplayEXT() seems unsupported\n");
-    }
-
-    /* Just in case get_platform_display failed... */
-    if (!egl_display_) {
-        Log::debug("Falling back to eglGetDisplay()\n");
-        egl_display_ = egl_get_display(native_display_);
-    }
-
-    if (!egl_display_) {
-        Log::error("eglGetDisplay() failed with error: 0x%x\n", egl_get_error());
-        return false;
-    }
-
-    int egl_major(-1);
-    int egl_minor(-1);
-    if (!egl_initialize(egl_display_, &egl_major, &egl_minor)) {
-        Log::error("eglInitialize() failed with error: 0x%x\n", egl_get_error());
-        egl_display_ = 0;
-        return false;
-    }
-
-    /* Reinitialize GLAD with a known display */
-    if (gladLoadEGLUserPtr(egl_display_, load_egl_func, &egl_lib_) == 0) {
-        Log::error("Loading EGL entry points failed\n");
-        return false;
-    }
-
-    /* From this point on we can use the normal EGL function calls. */
-
-#if GLMARK2_USE_GLESv2
-    EGLenum apiType(EGL_OPENGL_ES_API);
-#if defined(WIN32)
-    std::initializer_list<const char *> libNames = { "libGLESv2.dll" };
-#else
-    std::initializer_list<const char *> libNames = { "libGLESv2.so", "libGLESv2.so.2" };
-#endif
-#elif GLMARK2_USE_GL
-    EGLenum apiType(EGL_OPENGL_API);
-    std::initializer_list<const char *> libNames = { "libGL.so", "libGL.so.1" };
-    if (!GLAD_EGL_VERSION_1_4) {
-        Log::error("EGL version %d.%d does not support the OpenGL API\n",
-                   egl_major, egl_minor);
-        return false;
-    }
-#endif
-
-    if (eglBindAPI && !eglBindAPI(apiType)) {
-        Log::error("Failed to bind api\n");
-        return false;
-    }
-
-    if (!gl_lib_.open_from_alternatives(libNames)) {
-        Log::error("Error loading GL library\n");
-        return false;
-    }
-
-    return true;
-}
-
-
-bool
-GLStateEGL::gotValidDisplay()
-{
-    if(strcmp(getenv("stdout_headless"),"1")==0){
-        return gotValidDisplayHeadless();
-    } else {
-        return gotValidDisplayNotHeadless();
-    }
 }
 
 void
@@ -756,7 +686,6 @@ GLStateEGL::get_glvisualconfig(EGLConfig config, GLVisualConfig& visual_config)
     eglGetConfigAttrib(egl_display_, config, EGL_ALPHA_SIZE, &visual_config.alpha);
     eglGetConfigAttrib(egl_display_, config, EGL_DEPTH_SIZE, &visual_config.depth);
     eglGetConfigAttrib(egl_display_, config, EGL_STENCIL_SIZE, &visual_config.stencil);
-    eglGetConfigAttrib(egl_display_, config, EGL_SAMPLES, &visual_config.samples);
 }
 
 EGLConfig
@@ -791,7 +720,7 @@ GLStateEGL::select_best_config(std::vector<EGLConfig>& configs)
 }
 
 bool
-GLStateEGL::gotValidConfigHeadless()
+GLStateEGL::gotValidConfig()
 {
     if (egl_config_)
         return true;
@@ -800,105 +729,22 @@ GLStateEGL::gotValidConfigHeadless()
         return false;
 
     const EGLint config_attribs[] = {
-            EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
-            EGL_RED_SIZE, requested_visual_config_.red,
-            EGL_GREEN_SIZE, requested_visual_config_.green,
-            EGL_BLUE_SIZE, requested_visual_config_.blue,
-            EGL_ALPHA_SIZE, requested_visual_config_.alpha,
-            EGL_DEPTH_SIZE, requested_visual_config_.depth,
-            EGL_STENCIL_SIZE, requested_visual_config_.stencil,
-            EGL_SAMPLES, requested_visual_config_.samples,
+        EGL_RED_SIZE, requested_visual_config_.red,
+        EGL_GREEN_SIZE, requested_visual_config_.green,
+        EGL_BLUE_SIZE, requested_visual_config_.blue,
+        EGL_ALPHA_SIZE, requested_visual_config_.alpha,
+        EGL_DEPTH_SIZE, requested_visual_config_.depth,
+        EGL_STENCIL_SIZE, requested_visual_config_.stencil,
+        EGL_SURFACE_TYPE,EGL_PBUFFER_BIT,
 #if GLMARK2_USE_GLESv2
-            EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
 #elif GLMARK2_USE_GL
-            EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
+        EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
 #endif
-            EGL_NONE
+        EGL_NONE
     };
 
-    // Find out how many configs match the attributes.
-    EGLint num_configs(0);
-    EGLConfig eglCfg;
-    if (!eglChooseConfig(egl_display_, config_attribs, &eglCfg, 1, &num_configs)) {
-        Log::error("eglChooseConfig() (count query) failed with error: %d\n",
-                   eglGetError());
-        return false;
-    }
 
-    if (num_configs == 0) {
-        Log::error("eglChooseConfig() didn't return any configs\n");
-        return false;
-    }
-
-    // Get all the matching configs
-    vector<EGLConfig> configs(num_configs);
-    if (!eglChooseConfig(egl_display_, config_attribs, &configs.front(),
-                         num_configs, &num_configs))
-    {
-        Log::error("eglChooseConfig() failed with error: %d\n",
-                   eglGetError());
-        return false;
-    }
-
-    // Select the best matching config
-    egl_config_ = select_best_config(configs);
-
-    vector<EglConfig> configVec;
-    for (vector<EGLConfig>::const_iterator configIt = configs.begin();
-         configIt != configs.end();
-         configIt++)
-    {
-        EglConfig cfg(egl_display_, *configIt);
-        configVec.push_back(cfg);
-        if (*configIt == egl_config_) {
-            best_config_ = cfg;
-        }
-    }
-
-    // Print out the config information, and let the user know the decision
-    // about the "best" one with respect to the options.
-    unsigned int lineNumber(0);
-    Log::debug("Got %u suitable EGLConfigs:\n", num_configs);
-    for (vector<EglConfig>::const_iterator configIt = configVec.begin();
-         configIt != configVec.end();
-         configIt++, lineNumber++)
-    {
-        if (!(lineNumber % 32))
-        {
-            configIt->print_header();
-        }
-        configIt->print();
-    }
-    Log::debug("\n");
-    Log::debug("Best EGLConfig ID: 0x%x\n", best_config_.configID());
-
-    return true;
-}
-
-bool
-GLStateEGL::gotValidConfigNotHeadless()
-{
-    if (egl_config_)
-        return true;
-
-    if (!gotValidDisplay())
-        return false;
-
-    const EGLint config_attribs[] = {
-            EGL_RED_SIZE, requested_visual_config_.red,
-            EGL_GREEN_SIZE, requested_visual_config_.green,
-            EGL_BLUE_SIZE, requested_visual_config_.blue,
-            EGL_ALPHA_SIZE, requested_visual_config_.alpha,
-            EGL_DEPTH_SIZE, requested_visual_config_.depth,
-            EGL_STENCIL_SIZE, requested_visual_config_.stencil,
-            EGL_SAMPLES, requested_visual_config_.samples,
-#if GLMARK2_USE_GLESv2
-            EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-#elif GLMARK2_USE_GL
-            EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
-#endif
-            EGL_NONE
-    };
 
     // Find out how many configs match the attributes.
     EGLint num_configs(0);
@@ -919,13 +765,12 @@ GLStateEGL::gotValidConfigNotHeadless()
                          num_configs, &num_configs))
     {
         Log::error("eglChooseConfig() failed with error: %d\n",
-                   eglGetError());
+                     eglGetError());
         return false;
     }
 
     // Select the best matching config
     egl_config_ = select_best_config(configs);
-
     vector<EglConfig> configVec;
     for (vector<EGLConfig>::const_iterator configIt = configs.begin();
          configIt != configs.end();
@@ -958,29 +803,8 @@ GLStateEGL::gotValidConfigNotHeadless()
     return true;
 }
 
-
-bool
-GLStateEGL::gotValidConfig()
-{
-    if(strcmp(getenv("stdout_headless"),"1")==0){
-        return gotValidConfigHeadless();
-    } else {
-        return gotValidConfigNotHeadless();
-    }
-}
-
 bool
 GLStateEGL::gotValidSurface()
-{
-    if(strcmp(getenv("stdout_headless"),"1")==0){
-        return gotValidSurfaceHeadless();
-    } else {
-        return gotValidSurfaceNotHeadless();
-    }
-}
-
-bool
-GLStateEGL::gotValidSurfaceNotHeadless()
 {
     if (egl_surface_)
         return true;
@@ -991,74 +815,19 @@ GLStateEGL::gotValidSurfaceNotHeadless()
     if (!gotValidConfig())
         return false;
 
-    egl_surface_ = eglCreateWindowSurface(egl_display_, egl_config_, native_window_, 0);
+
+    EGLint egl_pbuffer_attribs[] = {
+            EGL_WIDTH, 900, EGL_HEIGHT, 900,
+            EGL_NONE,
+    };
+
+//    egl_surface_ = eglCreateWindowSurface(egl_display_, egl_config_, native_window_, 0);
+    egl_surface_ = eglCreatePbufferSurface(
+            egl_display_, egl_config_, egl_pbuffer_attribs);
     if (!egl_surface_) {
         Log::error("eglCreateWindowSurface failed with error: 0x%x\n", eglGetError());
         return false;
     }
-
-    return true;
-}
-
-bool
-GLStateEGL::gotValidSurfaceHeadless()
-{
-    if (egl_surface_)
-        return true;
-
-    if (!gotValidDisplay())
-        return false;
-
-    if (!gotValidConfig())
-        return false;
-
-//    egl_surface_ = eglCreateWindowSurface(egl_display_, egl_config_, native_window_, 0);
-//    if (!egl_surface_) {
-//        Log::error("eglCreateWindowSurface failed with error: 0x%x\n", eglGetError());
-//        return false;
-//    }
-
-    int pbufferWidth = 800;
-    int pbufferHeight = 600;
-
-    char* stdout_size;
-    stdout_size = getenv ("stdout_size");
-
-    if (stdout_size!=NULL){
-        // https://www.codingunit.com/c-reference-stdlib-h-function-getenv
-        Log::debug("stdout_size: %s\n",stdout_size);
-        char string[50];
-        // https://stackoverflow.com/questions/48673332/convert-char-to-array-of-chars
-        strcpy(string, stdout_size);
-        Log::debug("stdout_size: %s\n",string);
-        // Extract the first token
-        // https://www.educative.io/answers/splitting-a-string-using-strtok-in-c
-        char * token = strtok(string, "x");
-        Log::debug( "width:%s\n", token ); //printing the token
-        // https://stackoverflow.com/questions/2523467/how-to-split-a-string-to-2-strings-in-c
-        char * token2 = strtok(NULL, "x");
-        Log::debug( "height: %s\n", token2 );
-        // https://www.educative.io/answers/how-to-convert-a-string-to-an-integer-in-c
-        int width = atoi(token);
-        int height = atoi(token2);
-        pbufferWidth = width;
-        pbufferHeight = height;
-    }
-    printf ("stdout_size: %dx%d\n",pbufferWidth, pbufferHeight);
-
-
-
-
-    static const EGLint pbufferAttribs[] = {
-            EGL_WIDTH, pbufferWidth,
-            EGL_HEIGHT, pbufferHeight,
-            EGL_NONE,
-    };
-
-    // 3. Create a surface
-    egl_surface_ = eglCreatePbufferSurface(egl_display_, egl_config_,
-                                                 pbufferAttribs);
-
 
     return true;
 }

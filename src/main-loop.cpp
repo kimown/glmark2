@@ -23,7 +23,7 @@
 #include "main-loop.h"
 #include "util.h"
 #include "log.h"
-
+#include <string.h>
 #include <string>
 #include <sstream>
 
@@ -102,7 +102,13 @@ MainLoop::step()
         }
     }
 
-    bool should_quit = canvas_.should_quit();
+    bool should_quit = false;
+    if(strcmp(getenv("stdout_headless"),"1")==0){
+        should_quit = false;
+    } else {
+        should_quit = canvas_.should_quit();
+    }
+
 
     if (scene_ ->running() && !should_quit)
         draw();

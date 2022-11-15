@@ -128,8 +128,14 @@ class GLStateEGL : public GLState
     SharedLibrary egl_lib_;
     SharedLibrary gl_lib_;
     bool gotValidDisplay();
+    bool gotValidDisplayHeadless();
+    bool gotValidDisplayNotHeadless();
     bool gotValidConfig();
+    bool gotValidConfigHeadless();
+    bool gotValidConfigNotHeadless();
     bool gotValidSurface();
+    bool gotValidSurfaceHeadless();
+    bool gotValidSurfaceNotHeadless();
     bool gotValidContext();
     void get_glvisualconfig(EGLConfig config, GLVisualConfig& visual_config);
     EGLConfig select_best_config(std::vector<EGLConfig>& configs);
