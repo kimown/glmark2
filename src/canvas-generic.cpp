@@ -262,14 +262,10 @@ CanvasGeneric::resize_no_viewport(int width, int height)
         return true;
     }
 
-    if(strcmp(getenv("stdout_headless"),"1")==0){
-
-    }else {
-        if (!native_state_.create_window(properties))
-        {
-            Log::error("Error: Couldn't create native window!\n");
-            return false;
-        }
+    if (!native_state_.create_window(properties))
+    {
+        Log::error("Error: Couldn't create native window!\n");
+        return false;
     }
 
 

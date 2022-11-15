@@ -26,7 +26,7 @@
 #include <X11/Xutil.h>
 #include <X11/keysym.h>
 #include <X11/Xatom.h>
-
+#include <cstring>
 /******************
  * Public methods *
  ******************/
@@ -60,6 +60,43 @@ NativeStateX11::display()
 bool
 NativeStateX11::create_window(WindowProperties const& properties)
 {
+
+    if(strcmp(getenv("stdout_headless"),"1")==0){
+
+        int pbufferWidth = 800;
+        int pbufferHeight = 600;
+
+        char* stdout_size;
+        stdout_size = getenv ("stdout_size");
+
+        if (stdout_size!=NULL){
+            // https://www.codingunit.com/c-reference-stdlib-h-function-getenv
+            Log::debug("stdout_size: %s\n",stdout_size);
+            char string[50];
+            // https://stackoverflow.com/questions/48673332/convert-char-to-array-of-chars
+            strcpy(string, stdout_size);
+            Log::debug("stdout_size: %s\n",string);
+            // Extract the first token
+            // https://www.educative.io/answers/splitting-a-string-using-strtok-in-c
+            char * token = strtok(string, "x");
+            Log::debug( "width:%s\n", token ); //printing the token
+            // https://stackoverflow.com/questions/2523467/how-to-split-a-string-to-2-strings-in-c
+            char * token2 = strtok(NULL, "x");
+            Log::debug( "height: %s\n", token2 );
+            // https://www.educative.io/answers/how-to-convert-a-string-to-an-integer-in-c
+            int width = atoi(token);
+            int height = atoi(token2);
+            pbufferWidth = width;
+            pbufferHeight = height;
+        }
+        printf ("stdout_size: %dx%d\n",pbufferWidth, pbufferHeight);
+        properties_.width = pbufferWidth;
+        properties_.height = pbufferHeight;
+        return true;
+    } else {
+
+    }
+
     static const char *win_name("glmark2 " GLMARK_VERSION);
 
     if (!xdpy_) {

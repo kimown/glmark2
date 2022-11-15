@@ -505,34 +505,17 @@ GLStateEGL::gotValidDisplayHeadless()
             reinterpret_cast<PFNEGLGETDISPLAYPROC>(egl_lib_.load("eglGetDisplay"));
     PFNEGLINITIALIZEPROC egl_initialize =
             reinterpret_cast<PFNEGLINITIALIZEPROC>(egl_lib_.load("eglInitialize"));
-    PFNEGLQUERYDEVICESEXTPROC egl_QueryDevicesEXT =
-            reinterpret_cast<PFNEGLQUERYDEVICESEXTPROC>(egl_lib_.load("eglQueryDevicesExt"));
     printf("sdfadsf9991111111111\n");
 
-    int egl_version = gladLoaderLoadEGL(NULL);
-    if (!egl_version) {
-        printf("Unable to load EGL.\n");
-        return 1;
-    }
 
-    const int max_devices = 32;
-    EGLDeviceEXT egl_devices[max_devices];
-    EGLint error = eglGetError();
-    EGLint num_devices = 0;
-    eglQueryDevicesEXT(max_devices, egl_devices, &num_devices);
-    EGLDisplay eglDisplay = eglGetPlatformDisplayEXT(EGL_PLATFORM_DEVICE_EXT,
-                                                     egl_devices[0], NULL);
+//    EGLint major;
+//    EGLint minor;
+//
+//    EGLBoolean eglInitialized = eglInitialize(eglDisplay, &major, &minor);
+//
+//    printf("%d %d %d\n", major, minor, eglInitialized);
 
-    EGLint major;
-    EGLint minor;
-
-    EGLBoolean eglInitialized = eglInitialize(eglDisplay, &major, &minor);
-
-    printf("%d %d %d\n", major, minor, eglInitialized);
-    printf("EGL vendor string: %s\n", eglQueryString(eglDisplay, EGL_VENDOR));
-    printf("EGL vendor string: %s\n", eglQueryString(eglDisplay, EGL_CLIENT_APIS));
-    printf("EGL vendor string: %s\n", eglQueryString(eglDisplay, EGL_EXTENSIONS  ));
-    egl_display_ = eglDisplay;
+    egl_display_ = egl_get_display(EGL_DEFAULT_DISPLAY);
 
     if (!egl_query_string || !egl_get_proc_address || !egl_get_error ||
         !egl_get_display || !egl_initialize)
@@ -547,9 +530,9 @@ GLStateEGL::gotValidDisplayHeadless()
         && strstr(supported_extensions, "EGL_EXT_platform_base"))
     {
         Log::debug("Using eglGetPlatformDisplayEXT()\n");
-        PFNEGLGETPLATFORMDISPLAYEXTPROC egl_get_platform_display =
-                reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(
-                        egl_get_proc_address("eglGetPlatformDisplayEXT"));
+//        PFNEGLGETPLATFORMDISPLAYEXTPROC egl_get_platform_display =
+//                reinterpret_cast<PFNEGLGETPLATFORMDISPLAYEXTPROC>(
+//                        egl_get_proc_address("eglGetPlatformDisplayEXT"));
 
 //        if (egl_get_platform_display != nullptr) {
 //            egl_display_ = egl_get_platform_display(
@@ -611,6 +594,10 @@ GLStateEGL::gotValidDisplayHeadless()
         return false;
     }
 #endif
+
+    printf("EGL vendor string: %s\n", eglQueryString(egl_display_, EGL_VENDOR));
+    printf("EGL vendor string: %s\n", eglQueryString(egl_display_, EGL_CLIENT_APIS));
+    printf("EGL vendor string: %s\n", eglQueryString(egl_display_, EGL_EXTENSIONS  ));
 
     if (eglBindAPI && !eglBindAPI(apiType)) {
         Log::error("Failed to bind api\n");
