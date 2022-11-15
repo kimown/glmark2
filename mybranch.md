@@ -17,6 +17,10 @@ stdout_headless
 
 default-benchmarks.h
 
+
+ffmpeg -y -f rawvideo -pixel_format rgba -video_size 1920x1080 -i frame_0.rgba -frames:v 1 frame_0.rgba.png
+
+
 stdout_headless=1 stdout_size=3840x2160 ./glmark2-es2 --data-path=$(pwd)/../share/glmark2 --debug --validate --off-screen
 
 
