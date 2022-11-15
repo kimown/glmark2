@@ -222,32 +222,32 @@ main(int argc, char *argv[])
     printf("GL_VENDOR     = %s\n", (char *) glGetString(GL_VENDOR));
     printf("GL_EXTENSIONS = %s\n", (char *) glGetString(GL_EXTENSIONS));
 
-    int status = system(" rm -rf frame_0.rgba.png");
-    glClearColor(1.0, 0.0, 0.0, 1.0);
-    glClear(GL_COLOR_BUFFER_BIT);
-    int pbufferWidth = 1920;
-    int pbufferHeight = 1080;
-    unsigned char* data = (unsigned char*) malloc(4 * pbufferWidth * pbufferHeight);
-
-    glReadPixels(0, 0, pbufferWidth, pbufferHeight, GL_RGBA, GL_UNSIGNED_BYTE, data);
-
-    char buffer[2048];
-    snprintf(buffer, sizeof(buffer), "frame_%d.rgba", 0);
-    FILE *f = fopen(buffer, "w+b");
-    if (f != NULL) {
-        const size_t bytes_to_write = 4 * pbufferWidth * pbufferHeight;
-
-        if (fwrite(data, 1, bytes_to_write, f) != bytes_to_write) {
-            printf("[-] Unable to write %zu bytes to the output file, %s\n",bytes_to_write, buffer);
-        } else {
-            printf("[+] Successfully wrote %zu bytes , %s\n", bytes_to_write, buffer);
-        }
-        fclose(f);
-    } else {
-        printf("[-] Unable to open output file \n");
-    }
-
-    int status1 = system(" ffmpeg -y -f rawvideo -pixel_format rgba -video_size 1920x1080 -i frame_0.rgba -frames:v 1 frame_0.rgba.png");
+//    int status = system(" rm -rf frame_0.rgba.png");
+//    glClearColor(1.0, 0.0, 0.0, 1.0);
+//    glClear(GL_COLOR_BUFFER_BIT);
+//    int pbufferWidth = 1920;
+//    int pbufferHeight = 1080;
+//    unsigned char* data = (unsigned char*) malloc(4 * pbufferWidth * pbufferHeight);
+//
+//    glReadPixels(0, 0, pbufferWidth, pbufferHeight, GL_RGBA, GL_UNSIGNED_BYTE, data);
+//
+//    char buffer[2048];
+//    snprintf(buffer, sizeof(buffer), "frame_%d.rgba", 0);
+//    FILE *f = fopen(buffer, "w+b");
+//    if (f != NULL) {
+//        const size_t bytes_to_write = 4 * pbufferWidth * pbufferHeight;
+//
+//        if (fwrite(data, 1, bytes_to_write, f) != bytes_to_write) {
+//            printf("[-] Unable to write %zu bytes to the output file, %s\n",bytes_to_write, buffer);
+//        } else {
+//            printf("[+] Successfully wrote %zu bytes , %s\n", bytes_to_write, buffer);
+//        }
+//        fclose(f);
+//    } else {
+//        printf("[-] Unable to open output file \n");
+//    }
+//
+//    int status1 = system(" ffmpeg -y -f rawvideo -pixel_format rgba -video_size 1920x1080 -i frame_0.rgba -frames:v 1 frame_0.rgba.png");
 
     Log::info("=======================================================\n");
     Log::info("    glmark2 %s\n", GLMARK_VERSION);
