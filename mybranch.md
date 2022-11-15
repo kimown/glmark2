@@ -9,7 +9,7 @@ git checkout mybranch2
 ./waf build -j 10
 ./waf install --destdir=$PWD/release
 cd release/usr/local/bin
-stdout_headless=1 stdout_size=800x600 ./glmark2-es2 --data-path=$(pwd)/../share/glmark2 --off-screen 
+stdout_headless=1 stdout_size=800x600 ./glmark2-es2 --data-path=$(pwd)/../share/glmark2 --debug --validate
 
 
 stdout_headless=1 stdout_size=800x600 ./glmark2-es2 --data-path=$(pwd)/../share/glmark2 --off-screen  --validate
