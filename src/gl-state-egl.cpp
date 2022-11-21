@@ -439,6 +439,18 @@ GLStateEGL::reset()
 
 int fStreamIndex = 0;
 
+void writePipe(){
+    int pbufferWidth = 800;
+    int pbufferHeight = 600;
+    unsigned char* data = (unsigned char*) malloc(4 * pbufferWidth * pbufferHeight);
+
+    glReadPixels(0, 0, pbufferWidth, pbufferHeight, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+    const size_t bytes_to_write = 4 * pbufferWidth * pbufferHeight;
+    fwrite(data, 1, bytes_to_write, stderr);
+    fflush(stderr);
+}
+
 // ffmpeg -y -f rawvideo -pixel_format rgba -video_size 800x600 -i frame_0.rgba -frames:v 1 frame_0.rgba.png
 // ls frame_*.rgba | sort -V | xargs cat | ffmpeg -y -framerate 25 -f rawvideo -pixel_format rgba -video_size 800x600 -i - -preset ultrafast a.mp4
 void writeFile2(){
@@ -469,7 +481,12 @@ void writeFile2(){
 void
 GLStateEGL::swap()
 {
-    writeFile2();
+    if(strcmp(getenv("stdout"),"1")==0){
+        writePipe();
+    } else if(strcmp(getenv("stdout"),"0")==0){
+        writeFile2();
+    }
+
     eglSwapBuffers(egl_display_, egl_surface_);
 }
 

@@ -15,7 +15,26 @@ stdout_headless=1 stdout_size=800x600 ./glmark2-es2 --data-path=$(pwd)/../share/
 stdout_headless=1 stdout_size=800x600 ./glmark2-es2 --data-path=$(pwd)/../share/glmark2 --off-screen  --validate
 stdout_headless=1 stdout_size=1920x1080 ./glmark2-es2 --data-path=$(pwd)/../share/glmark2 --off-screen
 stdout_headless=1 stdout_size=3840x2160 ./glmark2-es2 --data-path=$(pwd)/../share/glmark2 --off-screen
+
+
+
+
+
+
+
+
+stdout_size=800x600 stdout_headless=1 ./glmark2-es2 --data-path=$(pwd)/../share/glmark2 
+
+https://www.rickmakes.com/ffmpeg-notes/
+stdout_size=800x600 stdout_headless=1 stdout=1 ./glmark2-es2 --data-path=$(pwd)/../share/glmark2 3>&2 2>&1 1>&3 |  ffmpeg -y -framerate 120 -f rawvideo -pixel_format rgba -video_size 800x600 -i - -f h264 -vcodec libx264  -preset ultrafast pipe:1 | ffplay -i pipe:0 
+
+
+
 ```
+
+
+
+
 
 stdout_headless
 
