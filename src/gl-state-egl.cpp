@@ -437,9 +437,39 @@ GLStateEGL::reset()
     return true;
 }
 
+int fStreamIndex = 0;
+
+// ffmpeg -y -f rawvideo -pixel_format rgba -video_size 800x600 -i frame_0.rgba -frames:v 1 frame_0.rgba.png
+// ls frame_*.rgba | sort -V | xargs cat | ffmpeg -y -framerate 25 -f rawvideo -pixel_format rgba -video_size 800x600 -i - -preset ultrafast a.mp4
+void writeFile2(){
+    int pbufferWidth = 800;
+    int pbufferHeight = 600;
+    unsigned char* data = (unsigned char*) malloc(4 * pbufferWidth * pbufferHeight);
+
+    glReadPixels(0, 0, pbufferWidth, pbufferHeight, GL_RGBA, GL_UNSIGNED_BYTE, data);
+
+    char buffer[2048];
+    snprintf(buffer, sizeof(buffer), "frame_%d.rgba", fStreamIndex);
+    FILE *f = fopen(buffer, "w+b");
+    if (f != NULL) {
+        const size_t bytes_to_write = 4 * pbufferWidth * pbufferHeight;
+
+        if (fwrite(data, 1, bytes_to_write, f) != bytes_to_write) {
+            printf("[-] Unable to write %zu bytes to the output file, %s\n",bytes_to_write, buffer);
+        } else {
+            printf("[+] Successfully wrote %zu bytes , %s\n", bytes_to_write, buffer);
+        }
+        fclose(f);
+    } else {
+        printf("[-] Unable to open output file \n");
+    }
+    fStreamIndex+=1;
+}
+
 void
 GLStateEGL::swap()
 {
+    writeFile2();
     eglSwapBuffers(egl_display_, egl_surface_);
 }
 
